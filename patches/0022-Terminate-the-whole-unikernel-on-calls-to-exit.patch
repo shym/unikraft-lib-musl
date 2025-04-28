@@ -1,0 +1,32 @@
+From 3592ad600b72b0d699ff206b418efc2a14338fd0 Mon Sep 17 00:00:00 2001
+From: Samuel Hym <samuel@tarides.com>
+Date: Thu, 15 Oct 2026 13:23:03 +0200
+Subject: [PATCH] Terminate the whole unikernel on calls to `exit`
+
+In our use case, there will ever be only one "process", so terminate the
+complete VM when it exits
+---
+ src/exit/_Exit.c | 9 +++++----
+ 1 file changed, 5 insertions(+), 4 deletions(-)
+
+diff --git a/src/exit/_Exit.c b/src/exit/_Exit.c
+index 7a6115c7..92a5d784 100644
+--- a/src/exit/_Exit.c
++++ b/src/exit/_Exit.c
+@@ -1,8 +1,9 @@
+-#include <stdlib.h>
+-#include "syscall.h"
++#include "uk/pm.h"
+ 
+ _Noreturn void _Exit(int ec)
+ {
+-	__syscall(SYS_exit_group, ec);
+-	for (;;) __syscall(SYS_exit, ec);
++	if(ec == 0)
++		uk_pm_syshalt();
++	else
++		uk_pm_syscrash();
+ }
+-- 
+2.55.0
+
